@@ -1,0 +1,22 @@
+---
+- name: Deploy ACiD App
+  hosts: all
+  become: true
+  
+  tasks:
+    - name: Pull Docker Image
+      docker_image:
+        name: tu-repositorio-docker/nombre-imagen:{{ image_version }}
+        source: pull
+    
+    - name: Stop and Remove Existing Container
+      docker_container:
+        name: app-container
+        state: absent
+    
+    - name: Start New Container
+      docker_container:
+        name: app-container
+        image: tu-repositorio-docker/nombre-imagen:{{ image_version }}
+        ports:
+          - "8080:8080"
