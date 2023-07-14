@@ -1,5 +1,15 @@
 pipeline {
   agent any
+
+
+  environment {
+        NEXUS_VERSION = "${env.NEXUS_VERSION}"
+        NEXUS_PROTOCOL = "${env.NEXUS_PROTOCOL}"
+        NEXUS_URL = "${env.NEXUS_URL}"
+        NEXUS_REPOSITORY_SNAPSHOT = "${env.NEXUS_REPOSITORY_SNAPSHOT}"
+        NEXUS_REPOSITORY_RELEASE = "${env.NEXUS_REPOSITORY_RELEASE}"
+        NEXUS_CREDENTIAL_ID = "${env.NEXUS_CREDENTIAL_ID}"
+  }
   
   stages {
     // 1.
@@ -41,11 +51,71 @@ pipeline {
          }
       }
    }
+
+  stage('SonarQube analysis') {            
+        environment {
+            SCANNER_HOME = tool 'sonarqube'
+        }
+        steps {
+            echo "------------------ SonarQube analysis ----------------------"
+            script {
+                artifactId = readMavenPom().getArtifactId()
+                version = readMavenPom().getVersion().replaceAll("-.*\$", "")
+                groupId = readMavenPom().getGroupId()
+            }
+            echo "*** Projectkey: ${groupId}:${artifactId}, Projectname: ${artifactId}, Projectversion: ${version} ***"
+            withSonarQubeEnv(credentialsId: 'sonarqube', installationName: 'sonarqube') {
+                sh """$SCANNER_HOME/bin/sonar-scanner \
+                    -Dsonar.projectKey=${groupId}:${artifactId} \
+                    -Dsonar.projectName=${artifactId} \
+                    -Dsonar.projectVersion=${version} \
+                    -Dsonar.sources=src/ \
+                    -Dsonar.java.binaries=target/classes/ \
+                    -Dsonar.exclusions=src/main/java/com/kalavit/javulna/****/*.java \
+                    -Dsonar.java.libraries=/home/jenkins/.m2/**/*.jar"""
+            }
+        }
+    }
+    stage('SQuality Gate') {
+        when {
+            branch 'develop'
+            environment name: 'IS_RELEASE', value: 'false'
+        }
+        steps {
+            timeout(time: 10, unit: 'MINUTES') {
+                waitForQualityGate abortPipeline: true
+            }
+        }
+    }
     // 5.
     stage('Publish') {
-      steps {
-        
-      }
+          when {
+              branch 'develop'
+          }
+          steps {
+              script {
+                  if (params.IS_RELEASE) {
+                      sh "git checkout main"
+                  }
+                  artifactId = readMavenPom().getArtifactId()
+                  version = readMavenPom().getVersion()
+                  groupId = readMavenPom().getGroupId()
+              }
+              echo "*** File: ${artifactId}, ${version}, ${groupId}"
+              nexusArtifactUploader (
+                  nexusVersion: NEXUS_VERSION, 
+                  protocol: NEXUS_PROTOCOL, 
+                  nexusUrl: NEXUS_URL, 
+                  groupId: "${groupId}", 
+                  version: "${version}", 
+                  repository: NEXUS_REPOSITORY, 
+                  credentialsId: NEXUS_CREDENTIAL_ID, 
+                  artifacts: [
+                      [artifactId: "${artifactId}",  classifier: '', file: "target/${artifactId}-${version}.jar", type: 'jar'],
+                      [artifactId: "${artifactId}", classifier: '', file: 'pom.xml', type: 'pom']
+                  ]
+              )
+          }
     }
     // 6.
     stage('Build Docker Image') {
