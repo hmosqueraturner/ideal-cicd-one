@@ -1330,7 +1330,7 @@ jobs:
 
       - name:  Deployment Summary
         run: |
-          echo "## 🎉 Deployment Successful!" >> `$GITHUB_STEP_SUMMARY
+          echo "##  Deployment Successful!" >> `$GITHUB_STEP_SUMMARY
           echo "" >> `$GITHUB_STEP_SUMMARY
           echo "- **Environment:** Production" >> `$GITHUB_STEP_SUMMARY
           echo "- **Image:** `${{ env.REGISTRY }}/`${{ env.IMAGE_NAME }}:`${{ github.run_number }}" >> `$GITHUB_STEP_SUMMARY
@@ -1569,7 +1569,7 @@ resource "azurerm_application_insights" "main" {
 }
 "@
 Set-Content -Path "$projectRoot\terraform\main.tf" -Value $mainConfig -Force
-Write-Host "  ✅ Created: terraform/main.tf" -ForegroundColor Green
+Write-Host "   Created: terraform/main.tf" -ForegroundColor Green
 
 # terraform/outputs.tf
 $outputsConfig = @"
@@ -1612,7 +1612,7 @@ output "log_analytics_workspace_id" {
 }
 "@
 Set-Content -Path "$projectRoot\terraform\outputs.tf" -Value $outputsConfig -Force
-Write-Host "  ✅ Created: terraform/outputs.tf" -ForegroundColor Green
+Write-Host "   Created: terraform/outputs.tf" -ForegroundColor Green
 
 # terraform/terraform.tfvars.example
 $tfvarsExample = @"

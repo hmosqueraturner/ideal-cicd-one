@@ -18,40 +18,40 @@ jobs:
   # JOB 1: BUILD & TEST
   # ============================================================================
   build-and-test:
-    name: 🏗️ Build and Test
+    name:  Build and Test
     runs-on: ubuntu-latest
     
     steps:
-      - name: 📥 Checkout code
+      - name:  Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
+      - name:  Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: ./app/package-lock.json
 
-      - name: 📦 Install dependencies
+      - name:  Install dependencies
         working-directory: ./app
         run: npm ci
 
-      - name: 🔍 Run linting
+      - name:  Run linting
         working-directory: ./app
         run: npm run lint || true
 
-      - name: 🧪 Run tests
+      - name:  Run tests
         working-directory: ./app
         run: npm run test
 
-      - name: 📊 Upload coverage reports
+      - name:  Upload coverage reports
         uses: codecov/codecov-action@v3
         with:
           files: ./app/coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
 
-      - name: 🏗️ Build application
+      - name:  Build application
         working-directory: ./app
         env:
           REACT_APP_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
@@ -59,7 +59,7 @@ jobs:
           REACT_APP_BUILD_DATE: ${{ github.event.head_commit.timestamp }}
         run: npm run build
 
-      - name: 📤 Upload build artifacts
+      - name:  Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
@@ -70,32 +70,32 @@ jobs:
   # JOB 2: SONARCLOUD ANALYSIS
   # ============================================================================
   sonarcloud:
-    name: 🔍 SonarCloud Analysis
+    name:  SonarCloud Analysis
     runs-on: ubuntu-latest
     needs: build-and-test
     
     steps:
-      - name: 📥 Checkout code
+      - name:  Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🔧 Setup Node.js
+      - name:  Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: ./app/package-lock.json
 
-      - name: 📦 Install dependencies
+      - name:  Install dependencies
         working-directory: ./app
         run: npm ci
 
-      - name: 🧪 Run tests with coverage
+      - name:  Run tests with coverage
         working-directory: ./app
         run: npm run test
 
-      - name: 📊 SonarCloud Scan
+      - name:  SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -105,23 +105,23 @@ jobs:
   # JOB 3: BUILD & PUSH DOCKER IMAGE
   # ============================================================================
   docker:
-    name: 🐳 Build and Push Docker Image
+    name:  Build and Push Docker Image
     runs-on: ubuntu-latest
     needs: [build-and-test, sonarcloud]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     
     steps:
-      - name: 📥 Checkout code
+      - name:  Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔐 Login to Azure Container Registry
+      - name:  Login to Azure Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ secrets.AZURE_ACR_USERNAME }}
           password: ${{ secrets.AZURE_ACR_PASSWORD }}
 
-      - name: 🏷️ Extract metadata
+      - name:  Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -132,7 +132,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ github.run_number }}
 
-      - name: 🔨 Build and push Docker image
+      - name:  Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./app
@@ -148,30 +148,30 @@ jobs:
   # JOB 4: TERRAFORM INFRASTRUCTURE
   # ============================================================================
   terraform:
-    name: 🏗️ Terraform Infrastructure
+    name:  Terraform Infrastructure
     runs-on: ubuntu-latest
     needs: docker
     if: github.ref == 'refs/heads/main'
     
     steps:
-      - name: 📥 Checkout code
+      - name:  Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Terraform
+      - name:  Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.5.0
 
-      - name: 🔐 Azure Login
+      - name:  Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 🔨 Terraform Init
+      - name:  Terraform Init
         working-directory: ./terraform
         run: terraform init
 
-      - name: 📋 Terraform Plan
+      - name:  Terraform Plan
         working-directory: ./terraform
         run: terraform plan -out=tfplan
         env:
@@ -180,7 +180,7 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
-      - name: 🚀 Terraform Apply
+      - name:  Terraform Apply
         working-directory: ./terraform
         run: terraform apply -auto-approve tfplan
         env:
@@ -193,31 +193,31 @@ jobs:
   # JOB 5: ANSIBLE DEPLOYMENT
   # ============================================================================
   deploy:
-    name: 🚀 Deploy with Ansible
+    name:  Deploy with Ansible
     runs-on: ubuntu-latest
     needs: terraform
     if: github.ref == 'refs/heads/main'
     
     steps:
-      - name: 📥 Checkout code
+      - name:  Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Python
+      - name:  Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: 📦 Install Ansible
+      - name:  Install Ansible
         run: |
           python -m pip install --upgrade pip
           pip install ansible azure-cli
 
-      - name: 🔐 Azure Login
+      - name:  Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 🚀 Run Ansible Playbook
+      - name:  Run Ansible Playbook
         working-directory: ./ansible
         run: |
           ansible-playbook deploy.yml \
@@ -226,7 +226,7 @@ jobs:
             -e "registry=${{ env.REGISTRY }}" \
             -e "image_name=${{ env.IMAGE_NAME }}"
 
-      - name: ✅ Deployment Summary
+      - name:  Deployment Summary
         run: |
           echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
