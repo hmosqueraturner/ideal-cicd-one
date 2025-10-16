@@ -1,57 +1,69 @@
-variable "resource_group_location" {
+variable "project_name" {
+  description = "Project name used for resource naming"
   type        = string
-  default     = "eastus"
-  description = "Location for all resources."
+  default     = "acid-cicd-one"
 }
 
-variable "resource_group_name_prefix" {
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
   type        = string
-  default     = "rg"
-  description = "Prefix of the resource group name that's combined with a random value so name is unique in your Azure subscription."
+  default     = "dev"
 }
 
-variable "container_group_name_prefix" {
+variable "location" {
+  description = "Azure region for resources"
   type        = string
-  description = "Prefix of the container group name that's combined with a random value so name is unique in your Azure subscription."
-  default     = "acigroup"
+  default     = "westeurope"
 }
 
-variable "container_name_prefix" {
+variable "resource_group_name" {
+  description = "Name of the resource group"
   type        = string
-  description = "Prefix of the container name that's combined with a random value so name is unique in your Azure subscription."
-  default     = "aci"
+  default     = "rg-acid-cicd"
 }
 
-variable "image" {
+variable "container_image" {
+  description = "Docker container image"
   type        = string
-  description = "Container image to deploy. Should be of the form repoName/imagename:tag for images stored in public Docker Hub, or a fully qualified URI for other registries. Images from private registries require additional registry credentials."
-  default     = "mcr.microsoft.com/azuredocs/aci-helloworld"
+  default     = "acidregistry.azurecr.io/ideal-cicd-one:latest"
 }
 
-variable "port" {
+variable "container_port" {
+  description = "Container port"
   type        = number
-  description = "Port to open on the container and the public IP address."
   default     = 80
 }
 
-variable "cpu_cores" {
+variable "container_cpu" {
+  description = "CPU cores for container"
   type        = number
-  description = "The number of CPU cores to allocate to the container."
+  default     = 0.5
+}
+
+variable "container_memory" {
+  description = "Memory in GB for container"
+  type        = number
   default     = 1
 }
 
-variable "memory_in_gb" {
+variable "min_replicas" {
+  description = "Minimum number of replicas"
   type        = number
-  description = "The amount of memory to allocate to the container in gigabytes."
-  default     = 2
+  default     = 1
 }
 
-variable "restart_policy" {
-  type        = string
-  description = "The behavior of Azure runtime if container has stopped."
-  default     = "Always"
-  validation {
-    condition     = contains(["Always", "Never", "OnFailure"], var.restart_policy)
-    error_message = "The restart_policy must be one of the following: Always, Never, OnFailure."
+variable "max_replicas" {
+  description = "Maximum number of replicas"
+  type        = number
+  default     = 3
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default = {
+    Project     = "ACiD Suite"
+    ManagedBy   = "Terraform"
+    Environment = "Development"
   }
 }

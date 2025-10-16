@@ -8,7 +8,7 @@ class AcidJavaApp
 {
 private static final String MESSAGE = "Hello ACiD World!";
 
-    public App() {}
+    public AcidJavaApp() {}
 
     public static void main(String[] args) {
         System.out.println(MESSAGE);

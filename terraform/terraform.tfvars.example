@@ -1,0 +1,25 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and customize values
+
+project_name        = "acid-cicd-one"
+environment         = "dev"
+location            = "westeurope"
+resource_group_name = "rg-acid-cicd-dev"
+
+# Container configuration
+container_image  = "acidregistry.azurecr.io/ideal-cicd-one:latest"
+container_port   = 80
+container_cpu    = 0.5
+container_memory = 1
+
+# Scaling configuration
+min_replicas = 1
+max_replicas = 3
+
+# Tags
+tags = {
+  Project     = "ACiD Suite"
+  ManagedBy   = "Terraform"
+  Environment = "Development"
+  Owner       = "DevOps Team"
+}
